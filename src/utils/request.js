@@ -10,7 +10,7 @@ const timeout = 30000 // 5秒后认定超时
 const service = axios.create({
     baseURL,
     timeout,
-    withCredentials: true,
+    withCredentials: false,
     transformRequest: [data => Qs.stringify(data)], // 针对post，put等请求进行序列化处理
 })
 
