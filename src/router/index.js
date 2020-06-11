@@ -39,6 +39,12 @@ const routes = [
     name: 'Details',
     component: () => import('@/views/details'),
     meta: { parentName: 'Index' }
+  },
+  {
+    path: '/reviewed',
+    name: 'Reviewed',
+    component: () => import('@/views/reviewed'),
+    meta: { parentName: 'Index' }
   }
 ]
 

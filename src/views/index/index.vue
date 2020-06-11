@@ -1,19 +1,12 @@
 <template>
   <div>
-    <van-search v-model="value" placeholder="请输入搜索关键词"/>
-    <van-list
-      v-model="loading"
-      :error.sync="error"
-      error-text="请求失败，点击重新加载"
-      :finished="finished"
-      finished-text="没有更多了"
-      @load="onLoad"
-    >
+    <van-search class="search" v-model="value" placeholder="请输入搜索关键词" @search="onSearch(value)"/>
+    <van-list v-model="loading">
       <van-cell
         v-for="item in listData"
-        :key="`listData${item.id}`"
+        :key="item.id"
         :title="item.name"
-        @click="$router.push('/user')"
+        @click="onGetid(item.id)"
       >
         <template #icon>
           <div style="paddingRight: 10px">
@@ -32,6 +25,23 @@
 <script>
 import api from "@/api/index";
 
+var url = require("url");
+var parse_url = null;
+var Page = 1;
+var PageCount = 0;
+var new_list = [];
+var parameter = {};
+var init_data = function() {
+  console.log("初始化");
+    if (window.location.href.lastIndexOf("#") > -1) {
+      parse_url = url.parse(window.location.href.replace("#", ""));
+    } else {
+      parse_url = url.parse(window.location.href);
+    }
+    new_list = [];
+    Page = 1;
+    parameter={};
+};
 export default {
   name: "Index",
   data() {
@@ -40,105 +50,77 @@ export default {
       listData: [
         {
           id: 1,
-          poto: "https://img.yzcdn.cn/vant/cat.jpeg",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
+          poto: "",
+          name: "",
           num: 0
-        },
-        {
-          id: 2,
-          poto: "https://img.yzcdn.cn/vant/apple-2.jpg",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
-          num: 4
-        },
-        {
-          id: 3,
-          poto: "https://img.yzcdn.cn/vant/apple-1.jpg",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
-          num: 4
-        },
-        {
-          id: 4,
-          poto: "",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
-          num: 4
-        },
-        {
-          id: 4,
-          poto: "",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
-          num: 4
-        },
-        {
-          id: 4,
-          poto: "",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
-          num: 4
-        },
-        {
-          id: 4,
-          poto: "",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
-          num: 4
-        },
-        {
-          id: 4,
-          poto: "",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
-          num: 4
-        },
-        {
-          id: 4,
-          poto: "",
-          name: "大佬胡吹",
-          // chart: "随便说了啥",
-          num: 4
         }
       ],
-      error: false,
-      loading: false,
-      finished: false
+      timer: null,
+      scrollT: 0,
+      stopscroll: 0
     };
+  },
+  beforeCreate: function() {
+    init_data();
   },
   mounted() {
     this.getData();
+    window.addEventListener("scroll", this.handleScroll, true);
   },
   methods: {
     getData() {
-      api.getData ({
-        api: 'common.first.level.area'
-      })
-      .then(res => {
-        console.log(res)
-      })
-      .catch(err => {
-        console.log(err)
-      })
+      api
+        .getData({
+          api: "/app/im/iM/OperationList?menuId=1051&page=" + Page,
+          parameter: parameter //这是填写搜索的
+        })
+        .then(res => {
+          var list = res.data.data.ResultData;
+          PageCount = res.data.data.PageCount;
+          for (let i = 0; i < list.length; i++) {
+            var every_data = {};
+            every_data.id = list[i].user_id;
+            every_data.poto = list[i].user_avatar;
+            every_data.name = list[i].user_name;
+            every_data.num = list[i].total_unread;
+            new_list.push(every_data);
+          }
+          this.listData = new_list;
+          console.log("数据构建成功");
+        })
+        .catch(err => {
+          console.log(err);
+        });
     },
-    onLoad() {
-      // 异步更新数据
-      // setTimeout 仅做示例，真实场景中一般为 ajax 请求
-      setTimeout(() => {
-        for (let i = 0; i < 10; i++) {
-          this.listData.push(this.listData.length + 1);
-        }
-
-        // 加载状态结束
-        this.loading = false;
-
-        // 数据全部加载完成
-        if (this.listData.length >= 40) {
-          this.finished = true;
-        }
-      }, 1000);
+    handleScroll() {
+      clearTimeout(this.timer); //清除定時器
+      this.timer = setTimeout(this.ScrollEnd, 500);
+      this.scrollT =
+        document.documentElement.scrollTop || document.body.scrollTop;
+    },
+    ScrollEnd() {
+      this.stopscroll =
+        document.documentElement.scrollTop || document.body.scrollTop; //獲取滾動停止后的scrolltop
+      if (this.stopscroll == this.scrollT) {
+        this.getData(Page++);
+      }
+    },
+    onSearch(val) {
+      parameter = { "applicationForm[user_name]": val };
+      Page = 1;
+      new_list = [];
+      this.getData();
+    },
+    onGetid(id) {
+      return this.$router.push({ path: "/user", query: { id: id } });
     }
+  },
+  beforeDestroy() {
+    window.removeEventListener("scroll", this.handleScroll, true); //离开当前组件别忘记移除事件监听哦
+    init_data();
   }
 };
 </script>
+
+<style>
+</style>

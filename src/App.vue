@@ -1,7 +1,10 @@
 <template>
   <div class="w-100 h-100 wrapper">
     <!-- 头部 start -->
-    <van-nav-bar title="面具奇缘后台操作系统" right-text="按钮" @click-right="onClickRight">
+    <van-nav-bar title="面具奇缘后台管理系统" right-text="按钮" @click-right="onClickRight" @click-left="onClickLeft">
+      <template #left>
+        <van-icon name="arrow-left" size="30" />
+      </template>
       <template #right>
         <van-icon name="wap-nav" size="30" />
       </template>
@@ -60,6 +63,9 @@ export default {
   methods: {
     onClickRight() {
       this.show = true;
+    },
+    onClickLeft(){
+      window.history.back();
     }
   }
 };
